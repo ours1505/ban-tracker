@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hypixel Ban Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <style>
+    :root {
+      --primary-color: #4facfe;
+      --secondary-color: #ff6b6b;
+      --background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: url('pc.png') center/cover fixed;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        background-image: url('mobile.png');
+        padding: 10px;
+      }
+    }
+    
+    #chart-container { 
+      width: 95%;
+      height: 70vh;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 25px 35px 45px 25px;
+      background-color: var(--background-color);
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    
+    .time-range-buttons {
+      text-align: center;
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .time-range-buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .time-range-buttons button.active {
+      background: var(--primary-color);
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .time-range-buttons button:hover:not(.active) {
+      background: #f0f0f0;
+      transform: translateY(-1px);
+    }
+    
+    h1 {
+      text-align: center;
+      color: white;
+      margin: 30px 0;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: auto;
+      color: white;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    footer span {
+      color: var(--secondary-color);
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.8em;
+      }
+      
+      #chart-container {
+        padding: 15px;
+        height: 60vh;
+      }
+      
+      .time-range-buttons button {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Hypixel Ban Tracker</h1>
+  <div id="chart-container">
+    <canvas id="banChart"></canvas>
+  </div>
+  <footer>
+    Made by NyaProxy Team with <span>❤</span>
+  </footer>
+  <script src="client.js"></script>
+</body>
+</html> 
