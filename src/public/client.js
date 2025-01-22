@@ -235,16 +235,16 @@ function updateChartWithHistory() {
             yAxisMax = Math.ceil(maxValue / 50) * 50;
         }
     } else if (currentTimeRange === '1h') {
-        if (maxValue <= 100) {
-            yAxisMax = 100;
+        if (maxValue <= 30) {
+            yAxisMax = 30;
         } else {
-            yAxisMax = Math.ceil(maxValue / 100) * 100;
+            yAxisMax = Math.ceil(maxValue / 10) * 10;
         }
     } else { // 24h
-        if (maxValue <= 1000) {
-            yAxisMax = 1000;
+        if (maxValue <= 300) {
+            yAxisMax = 300;
         } else {
-            yAxisMax = Math.ceil(maxValue / 1000) * 1000;
+            yAxisMax = Math.ceil(maxValue / 100) * 100;
         }
     }
     
