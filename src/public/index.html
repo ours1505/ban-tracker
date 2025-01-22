@@ -111,9 +111,49 @@
         font-size: 14px;
       }
     }
+    
+    /* 添加在线人数显示样式 */
+    #online-users {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 8px 15px;
+        border-radius: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-size: 14px;
+        color: #666;
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    #online-users::before {
+        content: "●";
+        color: #4facfe;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    @media (max-width: 768px) {
+        #online-users {
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    }
   </style>
 </head>
 <body>
+  <div id="online-users">在线: 1</div>
   <h1>Hypixel Ban Tracker</h1>
   <div id="chart-container">
     <canvas id="banChart"></canvas>

@@ -386,6 +386,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }).showToast();
         }
     });
+
+    // 添加在线人数更新监听
+    socket.on('onlineUsers', (count) => {
+        const onlineUsersElement = document.getElementById('online-users');
+        if (onlineUsersElement) {
+            onlineUsersElement.textContent = `在线: ${count}`;
+        }
+    });
 });
 
 // 添加错误处理

@@ -21,6 +21,7 @@ interface BanData {
 let banHistory: BanData[] = [];
 let lastData = null;
 let isFirstFetch = true;
+let onlineUsers = 0;
 
 // 添加日志函数
 function log(message: string, data: any = null) {
@@ -130,12 +131,17 @@ async function fetchHypixelData() {
 }
 
 io.on("connection", (socket) => {
-  log('客户端连接')
+  log('客户端连接');
+  onlineUsers++;
+  io.emit('onlineUsers', onlineUsers);
   
-  // 发送历史数据
-  socket.emit('historyData', banHistory)
+  socket.emit('historyData', banHistory);
   
-  socket.on("disconnect", () => log('客户端断开连接'))
+  socket.on("disconnect", () => {
+    log('客户端断开连接');
+    onlineUsers--;
+    io.emit('onlineUsers', onlineUsers);
+  });
 })
 
 // 等待首次获取数据完成后再开始定时更新
