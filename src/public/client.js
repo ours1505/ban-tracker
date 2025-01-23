@@ -1,6 +1,6 @@
 const socket = io();
 let chart;
-let currentTimeRange = '10min';
+let currentTimeRange = '1min';
 let banHistory = [];
 
 function log(message, data = null) {
@@ -164,17 +164,9 @@ function aggregateData(data, timeRange) {
         });
         return Object.values(minuteData);
     } else if (timeRange === '10min') {
-        // 最近30秒按秒显示，其余按分钟显示
-        const thirtySecondsAgo = now - 30 * 1000;
-        const recentData = data.filter(d => d.timestamp > thirtySecondsAgo);
-        const olderData = data.filter(d => d.timestamp <= thirtySecondsAgo);
-
-        // 处理最近30秒的数据（按秒显示）
-        const recentAggregated = recentData;
-
-        // 处理剩余时间的数据（按分钟聚合）
+        // 按分钟聚合
         const minuteData = {};
-        olderData.forEach(d => {
+        data.forEach(d => {
             const minute = Math.floor(d.timestamp / (60 * 1000));
             if (!minuteData[minute]) {
                 minuteData[minute] = {
@@ -186,8 +178,23 @@ function aggregateData(data, timeRange) {
             minuteData[minute].watchdog_increment += d.watchdog_increment;
             minuteData[minute].staff_increment += d.staff_increment;
         });
-
-        return [...Object.values(minuteData), ...recentAggregated].sort((a, b) => a.timestamp - b.timestamp);
+        return Object.values(minuteData);
+    } else if (timeRange === '1min') {
+        // 1分钟视图,按秒显示
+        const secondData = {};
+        data.forEach(d => {
+            const second = Math.floor(d.timestamp / 1000);
+            if (!secondData[second]) {
+                secondData[second] = {
+                    timestamp: d.timestamp,
+                    watchdog_increment: 0,
+                    staff_increment: 0
+                };
+            }
+            secondData[second].watchdog_increment += d.watchdog_increment;
+            secondData[second].staff_increment += d.staff_increment;
+        });
+        return Object.values(secondData);
     }
 
     return data;
@@ -199,9 +206,13 @@ function updateChartWithHistory() {
     let filterTime;
     
     switch(currentTimeRange) {
+        case '1min':
+            filterTime = now - 60 * 1000;
+            chart.options.plugins.title.text = 'Ban Rate (per second)';
+            break;
         case '10min':
             filterTime = now - 10 * 60 * 1000;
-            chart.options.plugins.title.text = 'Ban Rate (last 30s by second, rest by minute)';
+            chart.options.plugins.title.text = 'Ban Rate (per minute)';
             break;
         case '1h':
             filterTime = now - 60 * 60 * 1000;
@@ -224,15 +235,21 @@ function updateChartWithHistory() {
     
     // 根据数据动态调整Y轴范围
     let yAxisMax;
-    if (currentTimeRange === '10min') {
+    if (currentTimeRange === '1min') {
+        if (maxValue <= 5) {
+            yAxisMax = 5;
+        } else if (maxValue <= 10) {
+            yAxisMax = 10;
+        } else {
+            yAxisMax = Math.ceil(maxValue / 5) * 5;
+        }
+    } else if (currentTimeRange === '10min') {
         if (maxValue <= 10) {
             yAxisMax = 10;
         } else if (maxValue <= 20) {
             yAxisMax = 20;
-        } else if (maxValue <= 50) {
-            yAxisMax = 50;
         } else {
-            yAxisMax = Math.ceil(maxValue / 50) * 50;
+            yAxisMax = Math.ceil(maxValue / 10) * 10;
         }
     } else if (currentTimeRange === '1h') {
         if (maxValue <= 20) {
@@ -319,7 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'time-range-buttons';
     buttonContainer.innerHTML = `
-        <button class="active" data-range="10min">10 Minutes</button>
+        <button class="active" data-range="1min">1 Minute</button>
+        <button data-range="10min">10 Minutes</button>
         <button data-range="1h">1 Hour</button>
         <button data-range="24h">24 Hours</button>
     `;
