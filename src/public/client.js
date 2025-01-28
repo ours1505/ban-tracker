@@ -130,27 +130,46 @@ function aggregateData(data, timeRange) {
     const aggregated = [];
     if (!data.length) return aggregated;
     const now = Date.now();
+    
+    // 根据时间范围过滤数据
+    let filterTime;
+    switch(timeRange) {
+        case '24h':
+            filterTime = now - 24 * 60 * 60 * 1000;
+            break;
+        case '1h':
+            filterTime = now - 60 * 60 * 1000;
+            break;
+        case '10min':
+            filterTime = now - 10 * 60 * 1000;
+            break;
+        case '1min':
+            filterTime = now - 60 * 1000;
+            break;
+    }
+    
+    const filteredData = data.filter(d => d.timestamp > filterTime);
 
     if (timeRange === '24h') {
         // 按小时聚合
         const hourlyData = {};
-        data.forEach(d => {
-            const hour = new Date(d.timestamp).getHours();
-            if (!hourlyData[hour]) {
-                hourlyData[hour] = {
+        filteredData.forEach(d => {
+            const hourKey = Math.floor(d.timestamp / (60 * 60 * 1000));
+            if (!hourlyData[hourKey]) {
+                hourlyData[hourKey] = {
                     timestamp: d.timestamp,
                     watchdog_increment: 0,
                     staff_increment: 0
                 };
             }
-            hourlyData[hour].watchdog_increment += d.watchdog_increment;
-            hourlyData[hour].staff_increment += d.staff_increment;
+            hourlyData[hourKey].watchdog_increment += d.watchdog_increment;
+            hourlyData[hourKey].staff_increment += d.staff_increment;
         });
         return Object.values(hourlyData);
     } else if (timeRange === '1h') {
         // 按分钟聚合
         const minuteData = {};
-        data.forEach(d => {
+        filteredData.forEach(d => {
             const minute = Math.floor(d.timestamp / (60 * 1000));
             if (!minuteData[minute]) {
                 minuteData[minute] = {
@@ -166,7 +185,7 @@ function aggregateData(data, timeRange) {
     } else if (timeRange === '10min') {
         // 按分钟聚合
         const minuteData = {};
-        data.forEach(d => {
+        filteredData.forEach(d => {
             const minute = Math.floor(d.timestamp / (60 * 1000));
             if (!minuteData[minute]) {
                 minuteData[minute] = {
@@ -182,7 +201,7 @@ function aggregateData(data, timeRange) {
     } else if (timeRange === '1min') {
         // 1分钟视图,按秒显示
         const secondData = {};
-        data.forEach(d => {
+        filteredData.forEach(d => {
             const second = Math.floor(d.timestamp / 1000);
             if (!secondData[second]) {
                 secondData[second] = {
@@ -197,7 +216,7 @@ function aggregateData(data, timeRange) {
         return Object.values(secondData);
     }
 
-    return data;
+    return filteredData;
 }
 
 function updateChartWithHistory() {

@@ -5,6 +5,7 @@ import cors from "cors"
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import * as dotenv from 'dotenv'
+import { saveBanHistory, loadBanHistory } from './utils/storage'
 dotenv.config()
 
 const __filename = fileURLToPath(import.meta.url)
@@ -18,7 +19,12 @@ interface BanData {
   staff_increment: number;
 }
 
-let banHistory: BanData[] = [];
+let banHistory: BanData[] = []
+loadBanHistory().then(history => {
+  banHistory = history
+  log('已加载历史数据:', banHistory.length)
+})
+
 let lastData = null;
 let isFirstFetch = true;
 let onlineUsers = 0;
@@ -123,6 +129,7 @@ async function fetchHypixelData() {
     banHistory = banHistory.filter(data => data.timestamp > oneDayAgo)
     
     log('新数据:', banData)
+    await saveBanHistory(banHistory)
     return banData
   } catch (error) {
     log('请求数据时出错:', error)
