@@ -148,8 +148,53 @@ function aggregateData(data, timeRange) {
             break;
     }
     
-    const filteredData = data.filter(d => d.timestamp > filterTime);
+    // 严格过滤时间范围内的数据
+    const filteredData = data.filter(d => {
+        const timeDiff = now - d.timestamp;
+        switch(timeRange) {
+            case '24h':
+                return timeDiff <= 24 * 60 * 60 * 1000;
+            case '1h':
+                return timeDiff <= 60 * 60 * 1000;
+            case '10min':
+                return timeDiff <= 10 * 60 * 1000;
+            case '1min':
+                return timeDiff <= 60 * 1000;
+            default:
+                return false;
+        }
+    });
 
+    // 按时间排序
+    filteredData.sort((a, b) => a.timestamp - b.timestamp);
+
+    if (timeRange === '1min') {
+        // 1分钟视图,严格按秒聚合
+        const secondData = {};
+        const startTime = now - 60 * 1000; // 60秒前
+        
+        // 初始化每秒的数据点
+        for (let t = startTime; t <= now; t += 1000) {
+            const second = Math.floor(t / 1000);
+            secondData[second] = {
+                timestamp: t,
+                watchdog_increment: 0,
+                staff_increment: 0
+            };
+        }
+        
+        // 填充实际数据
+        filteredData.forEach(d => {
+            const second = Math.floor(d.timestamp / 1000);
+            if (secondData[second]) {
+                secondData[second].watchdog_increment += d.watchdog_increment;
+                secondData[second].staff_increment += d.staff_increment;
+            }
+        });
+        
+        return Object.values(secondData);
+    }
+    
     if (timeRange === '24h') {
         // 按小时聚合
         const hourlyData = {};
@@ -198,22 +243,6 @@ function aggregateData(data, timeRange) {
             minuteData[minute].staff_increment += d.staff_increment;
         });
         return Object.values(minuteData);
-    } else if (timeRange === '1min') {
-        // 1分钟视图,按秒显示
-        const secondData = {};
-        filteredData.forEach(d => {
-            const second = Math.floor(d.timestamp / 1000);
-            if (!secondData[second]) {
-                secondData[second] = {
-                    timestamp: d.timestamp,
-                    watchdog_increment: 0,
-                    staff_increment: 0
-                };
-            }
-            secondData[second].watchdog_increment += d.watchdog_increment;
-            secondData[second].staff_increment += d.staff_increment;
-        });
-        return Object.values(secondData);
     }
 
     return filteredData;
