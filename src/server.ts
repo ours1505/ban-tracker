@@ -109,28 +109,37 @@ async function fetchHypixelData() {
       return null
     }
     
-    const banData: BanData = {
-      timestamp: now,
-      watchdog_total: data.watchdog_total,
-      staff_total: data.staff_total,
-      watchdog_increment: data.watchdog_total - lastData.watchdog_total,
-      staff_increment: data.staff_total - lastData.staff_total
+    // 按天聚合存储
+    const currentDay = Math.floor(now / (24 * 60 * 60 * 1000));
+    const existingDay = banHistory.find(d => 
+        Math.floor(d.timestamp / (24 * 60 * 60 * 1000)) === currentDay
+    );
+
+    if (existingDay) {
+        // 合并当天数据
+        existingDay.watchdog_increment += data.watchdog_total - lastData.watchdog_total;
+        existingDay.staff_increment += data.staff_total - lastData.staff_total;
+        existingDay.timestamp = now; // 更新最后时间戳
+    } else {
+        // 添加新天记录
+        banHistory.push({
+            timestamp: now,
+            watchdog_total: data.watchdog_total,
+            staff_total: data.staff_total,
+            watchdog_increment: data.watchdog_total - lastData.watchdog_total,
+            staff_increment: data.staff_total - lastData.staff_total
+        });
     }
 
-    lastData = {
-      watchdog_total: data.watchdog_total,
-      staff_total: data.staff_total
-    }
-
-    banHistory.push(banData)
+    // 保留最近35天数据（缓冲2天）
+    const daysToKeep = 35;
+    banHistory = banHistory.filter(d => 
+        now - d.timestamp <= daysToKeep * 24 * 60 * 60 * 1000
+    );
     
-    // 保留最近30天的数据
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
-    banHistory = banHistory.filter(data => data.timestamp > thirtyDaysAgo)
-    
-    log('新数据:', banData)
+    log('新数据:', data)
     await saveBanHistory(banHistory)
-    return banData
+    return data
   } catch (error) {
     log('请求数据时出错:', error)
     return null

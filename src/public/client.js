@@ -385,8 +385,15 @@ function updateChartWithHistory() {
         }
     });
     
-    chart.data.datasets[0].data = aggregatedData.map(d => d.watchdog_increment);
-    chart.data.datasets[1].data = aggregatedData.map(d => d.staff_increment);
+    chart.data.datasets[0].data = aggregatedData.reduce((acc, d) => {
+        acc.push((acc[acc.length-1] || 0) + d.watchdog_increment);
+        return acc;
+    }, []);
+    
+    chart.data.datasets[1].data = aggregatedData.reduce((acc, d) => {
+        acc.push((acc[acc.length-1] || 0) + d.staff_increment);
+        return acc;
+    }, []);
     
     chart.update();
 }

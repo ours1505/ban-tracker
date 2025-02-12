@@ -24,7 +24,12 @@ async function ensureDataDir() {
 export async function saveBanHistory(history: BanData[]) {
   try {
     await ensureDataDir()
-    await writeFile(BAN_HISTORY_FILE, JSON.stringify(history), 'utf-8')
+    const compressed = history.map(d => [
+      d.timestamp,
+      d.watchdog_increment,
+      d.staff_increment
+    ])
+    await writeFile(BAN_HISTORY_FILE, JSON.stringify(compressed), 'utf-8')
   } catch (error) {
     console.error('Error saving ban history:', error)
   }
@@ -34,11 +39,18 @@ export async function saveBanHistory(history: BanData[]) {
 export async function loadBanHistory(): Promise<BanData[]> {
   try {
     await ensureDataDir()
-    if (!existsSync(BAN_HISTORY_FILE)) {
-      return []
-    }
+    if (!existsSync(BAN_HISTORY_FILE)) return []
+    
     const data = await readFile(BAN_HISTORY_FILE, 'utf-8')
-    return JSON.parse(data)
+    const compressed = JSON.parse(data)
+    
+    return compressed.map((d: any[]) => ({
+      timestamp: d[0],
+      watchdog_increment: d[1],
+      staff_increment: d[2],
+      watchdog_total: 0,  // 不再存储总量
+      staff_total: 0
+    }))
   } catch (error) {
     console.error('Error loading ban history:', error)
     return []
