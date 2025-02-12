@@ -134,6 +134,9 @@ function aggregateData(data, timeRange) {
     // 根据时间范围过滤数据
     let filterTime;
     switch(timeRange) {
+        case '30d':
+            filterTime = now - 30 * 24 * 60 * 60 * 1000;
+            break;
         case '24h':
             filterTime = now - 24 * 60 * 60 * 1000;
             break;
@@ -152,6 +155,8 @@ function aggregateData(data, timeRange) {
     const filteredData = data.filter(d => {
         const timeDiff = now - d.timestamp;
         switch(timeRange) {
+            case '30d':
+                return timeDiff <= 30 * 24 * 60 * 60 * 1000;
             case '24h':
                 return timeDiff <= 24 * 60 * 60 * 1000;
             case '1h':
@@ -243,6 +248,22 @@ function aggregateData(data, timeRange) {
             minuteData[minute].staff_increment += d.staff_increment;
         });
         return Object.values(minuteData);
+    } else if (timeRange === '30d') {
+        // 按天聚合
+        const dailyData = {};
+        filteredData.forEach(d => {
+            const dayKey = Math.floor(d.timestamp / (24 * 60 * 60 * 1000));
+            if (!dailyData[dayKey]) {
+                dailyData[dayKey] = {
+                    timestamp: d.timestamp,
+                    watchdog_increment: 0,
+                    staff_increment: 0
+                };
+            }
+            dailyData[dayKey].watchdog_increment += d.watchdog_increment;
+            dailyData[dayKey].staff_increment += d.staff_increment;
+        });
+        return Object.values(dailyData);
     }
 
     return filteredData;
@@ -269,6 +290,10 @@ function updateChartWithHistory() {
         case '24h':
             filterTime = now - 24 * 60 * 60 * 1000;
             chart.options.plugins.title.text = 'Ban Rate (per hour)';
+            break;
+        case '30d':
+            filterTime = now - 30 * 24 * 60 * 60 * 1000;
+            chart.options.plugins.title.text = 'Ban Rate (per day)';
             break;
     }
     
@@ -305,11 +330,17 @@ function updateChartWithHistory() {
         } else {
             yAxisMax = Math.ceil(maxValue / 10) * 10;
         }
-    } else { // 24h
+    } else if (currentTimeRange === '24h') {
         if (maxValue <= 300) {
             yAxisMax = 300;
         } else {
             yAxisMax = Math.ceil(maxValue / 100) * 100;
+        }
+    } else if (currentTimeRange === '30d') {
+        if (maxValue <= 1000) {
+            yAxisMax = 1000;
+        } else {
+            yAxisMax = Math.ceil(maxValue / 500) * 500;
         }
     }
     
@@ -331,7 +362,12 @@ function updateChartWithHistory() {
     
     chart.data.labels = aggregatedData.map(d => {
         const date = new Date(d.timestamp);
-        if (currentTimeRange === '24h') {
+        if (currentTimeRange === '30d') {
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+        } else if (currentTimeRange === '24h') {
             return `${date.getHours()}:00`;
         } else if (currentTimeRange === '10min' && d.timestamp > now - 30 * 1000) {
             return date.toLocaleTimeString('en-US', { 
@@ -339,6 +375,8 @@ function updateChartWithHistory() {
                 minute: '2-digit', 
                 second: '2-digit' 
             });
+        } else if (currentTimeRange === '30d') {
+            return date.toLocaleDateString('en-US');
         } else {
             return date.toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
@@ -388,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button data-range="10min">10 Minutes</button>
         <button data-range="1h">1 Hour</button>
         <button data-range="24h">24 Hours</button>
+        <button data-range="30d">30 Days</button>
     `;
     ctx.parentElement.insertBefore(buttonContainer, ctx);
     

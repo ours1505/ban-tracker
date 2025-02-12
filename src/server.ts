@@ -124,9 +124,9 @@ async function fetchHypixelData() {
 
     banHistory.push(banData)
     
-    // 只保留最近24小时的数据
-    const oneDayAgo = now - 24 * 60 * 60 * 1000
-    banHistory = banHistory.filter(data => data.timestamp > oneDayAgo)
+    // 保留最近30天的数据
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
+    banHistory = banHistory.filter(data => data.timestamp > thirtyDaysAgo)
     
     log('新数据:', banData)
     await saveBanHistory(banHistory)
