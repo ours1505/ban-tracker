@@ -79,7 +79,7 @@ async function fetchHypixelData() {
 
   lastRequestTime = now
   try {
-    log('请求 Hypixel API...')
+    
     
     // 根据环境变量选择 API
     const apiUrl = process.env.IS_USING_OFFICAL_API === 'false' 
@@ -91,6 +91,8 @@ async function fetchHypixelData() {
       : { "API-Key": process.env.HYPIXEL_API_KEY };
 
     const response = await fetch(apiUrl, { headers });
+
+    log('请求 Hypixel API...', apiUrl)
     
     if (!response.ok) {
       const errorData = await response.json()
