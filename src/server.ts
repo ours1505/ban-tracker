@@ -80,15 +80,18 @@ async function fetchHypixelData() {
   lastRequestTime = now
   try {
     
-    
     // 根据环境变量选择 API
     const apiUrl = process.env.IS_USING_OFFICAL_API === 'false' 
       ? "https://api.plancke.io/hypixel/v1/punishmentStats" 
       : "https://api.hypixel.net/v2/punishmentstats";
 
     const headers = process.env.IS_USING_OFFICAL_API === 'false' 
-      ? {} 
-      : { "API-Key": process.env.HYPIXEL_API_KEY };
+      ? { 
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+        } 
+      : { 
+          "API-Key": process.env.HYPIXEL_API_KEY 
+        };
 
     const response = await fetch(apiUrl, { headers });
 
@@ -130,15 +133,15 @@ async function fetchHypixelData() {
     
     const banData: BanData = {
       timestamp: now,
-      watchdog_total: data.watchdog_total,
-      staff_total: data.staff_total,
-      watchdog_increment: data.watchdog_total - lastData.watchdog_total,
-      staff_increment: data.staff_total - lastData.staff_total
+      watchdog_total: apiData.watchdog_total,
+      staff_total: apiData.staff_total,
+      watchdog_increment: apiData.watchdog_total - lastData.watchdog_total,
+      staff_increment: apiData.staff_total - lastData.staff_total
     }
 
     lastData = {
-      watchdog_total: data.watchdog_total,
-      staff_total: data.staff_total
+      watchdog_total: apiData.watchdog_total,
+      staff_total: apiData.staff_total
     }
 
     banHistory.push(banData)
