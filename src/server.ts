@@ -80,11 +80,17 @@ async function fetchHypixelData() {
   lastRequestTime = now
   try {
     log('请求 Hypixel API...')
-    const response = await fetch("https://api.hypixel.net/v2/punishmentstats", {
-      headers: {
-        "API-Key": process.env.HYPIXEL_API_KEY
-      }
-    })
+    
+    // 根据环境变量选择 API
+    const apiUrl = process.env.IS_USING_OFFICAL_API === 'false' 
+      ? "https://api.plancke.io/hypixel/v1/punishmentStats" 
+      : "https://api.hypixel.net/v2/punishmentstats";
+
+    const headers = process.env.IS_USING_OFFICAL_API === 'false' 
+      ? {} 
+      : { "API-Key": process.env.HYPIXEL_API_KEY };
+
+    const response = await fetch(apiUrl, { headers });
     
     if (!response.ok) {
       const errorData = await response.json()
@@ -94,11 +100,22 @@ async function fetchHypixelData() {
     
     const data = await response.json()
 
+    // 处理不同 API 返回的数据格式
+    const apiData = process.env.IS_USING_OFFICAL_API === 'false' 
+      ? {
+          watchdog_total: data.record.watchdog_total,
+          staff_total: data.record.staff_total,
+        } 
+      : {
+          watchdog_total: data.watchdog_total,
+          staff_total: data.staff_total,
+        };
+
     if (isFirstFetch) {
       log('首次获取数据，设置基准值')
       lastData = {
-        watchdog_total: data.watchdog_total,
-        staff_total: data.staff_total
+        watchdog_total: apiData.watchdog_total,
+        staff_total: apiData.staff_total
       }
       isFirstFetch = false
       return null
